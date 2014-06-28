@@ -34,10 +34,16 @@ public class Main
 
 	private static String encodeJustASCII(final String input)
 	{
-		String out = "";
-		for (int i = 0; i < input.length(); i += 2)
+		String content = input;
+		while (content.length() % 2 > 0)
 		{
-			out += (char) (input.charAt(i) << 8 | input.charAt(i + 1));
+			content += " ";
+		}
+
+		String out = "";
+		for (int i = 0; i < content.length(); i += 2)
+		{
+			out += (char) (content.charAt(i) << 8 | content.charAt(i + 1));
 		}
 
 		return out;
@@ -46,9 +52,11 @@ public class Main
 	private static String encodeTo3Byte(final String input)
 	{
 		String content = input;
-		while ((content.length() + 1) % 3 > 0)
+		int byteLength = content.getBytes().length;
+		while (byteLength % 2 > 0)
 		{
 			content += " ";
+			byteLength = content.getBytes().length;
 		}
 
 		final byte[] data = content.getBytes();

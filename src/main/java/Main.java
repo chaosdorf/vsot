@@ -107,6 +107,6 @@ public class Main
 
 	private static String toBinary(final int bits, final int data)
 	{
-		return String.format("%" + bits + "s", Integer.toBinaryString(data).replace(' ', '0')).replace(' ', '0');
+		return String.format("%" + bits + "s", Integer.toBinaryString(data)).replace(' ', '0');
 	}
 }

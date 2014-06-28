@@ -2,3 +2,4 @@
 *.iml
 target/
 classes/
+src/main/resources/output.jpg

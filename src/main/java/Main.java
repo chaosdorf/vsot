@@ -1,116 +1,40 @@
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Main
 {
-	private static boolean DEBUG = false;
-
-	public static void main(final String[] args)
+	public static void main(final String[] args) throws IOException, URISyntaxException
 	{
-		final String content = "Bei der UTF-8-Kodierung wird jedem Unicode-Zeichen eine speziell kodierte Zeichenkette variabler Länge zugeordnet. Dabei unterstützt UTF-8 Zeichenketten bis zu einer Länge von vier Byte, auf die sich – wie bei allen UTF-Formaten – alle Unicode-Zeichen abbilden lassen.";
+		final URL url = Main.class.getResource("chaosdorf-icon.jpg");
+		final Path path = Paths.get(url.toURI());
+		final byte[] content = Files.readAllBytes(path);
 
-		// Original content
-		System.out.println("Original content:");
-		System.out.println(content + " (" + content.length() + "/140)");
-		System.out.println();
+		final String encoded = TranscoderUtils.encode(content);
+		final byte[] decoded = TranscoderUtils.decode(encoded);
 
-		// ASCII only
-		System.out.println("Convert ASCII only:");
-
-		final String encodedJustASCII = encodeJustASCII(content);
-		System.out.println(encodedJustASCII + " (" + encodedJustASCII.length() + "/140)");
-
-		final String decodedJustASCII = decodeFrom3Byte(encodedJustASCII.getBytes());
-		System.out.println(decodedJustASCII + " (" + decodedJustASCII.length() + "/140)");
-
-		System.out.println();
-
-		// 3 Byte for 2 characters
-		System.out.println("Convert to 3 Byte:");
-
-		final String encodedTo3Byte = encodeTo3Byte(content.getBytes());
-		System.out.println(encodedTo3Byte + " (" + encodedTo3Byte.length() + "/140)");
-
-		final String decodedFrom3Byte = decodeFrom3Byte(encodedTo3Byte.getBytes());
-		System.out.println(decodedFrom3Byte + " (" + decodedFrom3Byte.length() + "/140)");
-	}
-
-	private static String encodeJustASCII(final String input)
-	{
-		// Pad data if number of characters is uneven
-		String data = input;
-		while (data.length() % 2 > 0)
+		int limit = 0;
+		for (int i = 0; i < content.length; i++)
 		{
-			data += " ";
-		}
-
-		// Encode data
-		String encoded = "";
-		for (int i = 0; i < data.length(); i += 2)
-		{
-			encoded += (char) (data.charAt(i) << 8 | data.charAt(i + 1));
-		}
-
-		return encoded;
-	}
-
-	private static String encodeTo3Byte(final byte[] input)
-	{
-		// Pad data if number of bytes is uneven
-		final int byteLength = input.length;
-		final boolean isUneven = (byteLength % 2 > 0);
-		final byte[] data = new byte[isUneven ? byteLength + 1 : byteLength];
-		System.arraycopy(input, 0, data, 0, byteLength);
-		if (isUneven)
-		{
-			data[byteLength] = ' ';
-		}
-
-		// Encode data
-		final int size = (int) Math.ceil(data.length * 3 / 2);
-		final byte[] encoded = new byte[size];
-
-		int j = 0;
-		for (int i = 0; i < size; i += 3)
-		{
-			encoded[i    ] = (byte) (0b1110_0000 | ((data[j    ] & 0b1111_0000) >> 4));
-			encoded[i + 1] = (byte) (0b1000_0000 | ((data[j    ] & 0b0000_1111) << 2) | ((data[j + 1] & 0b1100_0000) >> 6));
-			encoded[i + 2] = (byte) (0b1000_0000 | ((data[j + 1] & 0b0011_1111)));
-
-			if (DEBUG)
+			if (content[i] != decoded[i])
 			{
-				System.out.printf("1110 %s - 10 %s %s - 10 %s - %s %s - %s\n",
-						toBinary(4, ((data[j    ] & 0b1111_0000) >> 4)),
-						toBinary(4, ((data[j    ] & 0b0000_1111))),
-						toBinary(2, ((data[j + 1] & 0b1100_0000) >> 6)),
-						toBinary(6, ((data[j + 1] & 0b0011_1111))),
-						(char) data[j    ],
-						(char) data[j + 1],
-						new String(new byte[]{encoded[i], encoded[i + 1], encoded[i + 2]})
+				System.out.printf("%5d: %8s %8s\n",
+						i,
+						TranscoderUtils.toBinary(8, content[i]),
+						TranscoderUtils.toBinary(8, decoded[i])
 				);
+				if (++limit > 10)
+				{
+					break;
+				}
 			}
-
-			j += 2;
 		}
 
-		return new String(encoded);
-	}
-
-	private static String decodeFrom3Byte(final byte[] data)
-	{
-		// Decode data
-		final byte[] decoded = new byte[(int) Math.ceil(data.length * 2 / 3)];
-
-		int j = 0;
-		for (int i = 0; i < data.length; i += 3)
-		{
-			decoded[j    ] = (byte) (((data[i    ] & 0b0000_1111) << 4) | ((data[i + 1] & 0b0011_1100) >> 2));
-			decoded[j + 1] = (byte) (((data[i + 1] & 0b0000_0011) << 6) | ((data[i + 2] & 0b0011_1111)));
-			j += 2;
-		}
-
-		return (new String(decoded)).trim();
-	}
-
-	private static String toBinary(final int bits, final int data)
-	{
-		return String.format("%" + bits + "s", Integer.toBinaryString(data)).replace(' ', '0');
+		//final FileOutputStream fos = new FileOutputStream("src/main/resources/output.jpg");
+		//fos.write(decoded);
+		//fos.close();
 	}
 }

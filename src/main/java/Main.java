@@ -8,7 +8,7 @@ public class Main
 
 		// Original content
 		System.out.println("Original content:");
-		System.out.println(content);
+		System.out.println(content + " (" + content.length() + "/140)");
 		System.out.println();
 
 		// ASCII only
@@ -17,7 +17,7 @@ public class Main
 		final String encodedJustASCII = encodeJustASCII(content);
 		System.out.println(encodedJustASCII + " (" + encodedJustASCII.length() + "/140)");
 
-		final String decodedJustASCII = decodeFrom3Byte(encodedJustASCII);
+		final String decodedJustASCII = decodeFrom3Byte(encodedJustASCII.getBytes());
 		System.out.println(decodedJustASCII + " (" + decodedJustASCII.length() + "/140)");
 
 		System.out.println();
@@ -25,41 +25,45 @@ public class Main
 		// 3 Byte for 2 characters
 		System.out.println("Convert to 3 Byte:");
 
-		final String encodedTo3Byte = encodeTo3Byte(content);
+		final String encodedTo3Byte = encodeTo3Byte(content.getBytes());
 		System.out.println(encodedTo3Byte + " (" + encodedTo3Byte.length() + "/140)");
 
-		final String decodedFrom3Byte = decodeFrom3Byte(encodedTo3Byte);
+		final String decodedFrom3Byte = decodeFrom3Byte(encodedTo3Byte.getBytes());
 		System.out.println(decodedFrom3Byte + " (" + decodedFrom3Byte.length() + "/140)");
 	}
 
 	private static String encodeJustASCII(final String input)
 	{
-		String content = input;
-		while (content.length() % 2 > 0)
+		// Pad data if number of characters is uneven
+		String data = input;
+		while (data.length() % 2 > 0)
 		{
-			content += " ";
+			data += " ";
 		}
 
-		String out = "";
-		for (int i = 0; i < content.length(); i += 2)
+		// Encode data
+		String encoded = "";
+		for (int i = 0; i < data.length(); i += 2)
 		{
-			out += (char) (content.charAt(i) << 8 | content.charAt(i + 1));
+			encoded += (char) (data.charAt(i) << 8 | data.charAt(i + 1));
 		}
 
-		return out;
+		return encoded;
 	}
 
-	private static String encodeTo3Byte(final String input)
+	private static String encodeTo3Byte(final byte[] input)
 	{
-		String content = input;
-		int byteLength = content.getBytes().length;
-		while (byteLength % 2 > 0)
+		// Pad data if number of bytes is uneven
+		final int byteLength = input.length;
+		final boolean isUneven = (byteLength % 2 > 0);
+		final byte[] data = new byte[isUneven ? byteLength + 1 : byteLength];
+		System.arraycopy(input, 0, data, 0, byteLength);
+		if (isUneven)
 		{
-			content += " ";
-			byteLength = content.getBytes().length;
+			data[byteLength] = ' ';
 		}
 
-		final byte[] data = content.getBytes();
+		// Encode data
 		final int size = (int) Math.ceil(data.length * 3 / 2);
 		final byte[] encoded = new byte[size];
 
@@ -89,9 +93,9 @@ public class Main
 		return new String(encoded);
 	}
 
-	private static String decodeFrom3Byte(final String content)
+	private static String decodeFrom3Byte(final byte[] data)
 	{
-		final byte[] data = content.getBytes();
+		// Decode data
 		final byte[] decoded = new byte[(int) Math.ceil(data.length * 2 / 3)];
 
 		int j = 0;

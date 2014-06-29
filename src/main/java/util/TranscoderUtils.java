@@ -81,6 +81,31 @@ public class TranscoderUtils
 		return (new String(decode(input))).trim();
 	}
 
+	public static boolean compareResults(final byte[] original, final byte[] converted, final int maxResults)
+	{
+		int limit = 0;
+		for (int i = 0; i < original.length; i++)
+		{
+			if (original[i] != converted[i])
+			{
+				if (limit == 0)
+				{
+					System.out.println("       Original Converted");
+				}
+				System.out.printf("%5d: %8s %8s\n",
+						i,
+						TranscoderUtils.toBinary(8, original[i]),
+						TranscoderUtils.toBinary(8, converted[i])
+				);
+				if (++limit == maxResults)
+				{
+					break;
+				}
+			}
+		}
+		return (limit > 0);
+	}
+
 	public static String toBinary(final int bits, final int data)
 	{
 		final String binary = String.format("%" + bits + "s", Integer.toBinaryString(data)).replace(' ', '0');

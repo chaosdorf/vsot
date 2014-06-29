@@ -13,36 +13,19 @@ public class Main
 		final byte[] decoded = TranscoderUtils.decodeBase64(encodedBase64);
 
 		// Check if converting did work
-		int limit = 0;
-		for (int i = 0; i < content.length; i++)
-		{
-			if (content[i] != decoded[i])
-			{
-				if (limit == 0)
-				{
-					System.out.println("       Original Converted");
-				}
-				System.out.printf("%5d: %8s %8s\n",
-						i,
-						TranscoderUtils.toBinary(8, content[i]),
-						TranscoderUtils.toBinary(8, decoded[i])
-				);
-				if (++limit == 10)
-				{
-					break;
-				}
-			}
-		}
-		if (limit > 0)
+		if (TranscoderUtils.compareResults(content, decoded, 10))
 		{
 			System.err.println("We had some errors in the converting process!");
 			System.exit(1);
 		}
+		System.out.println("Conversion was successful! Saving results...");
 
 		// Save image back into new file
 		FileUtils.save("src/main/resources/output.jpg", decoded);
 
-		// Save encoded Strings as tweetable chunks
+		// Save encoded Strings in 140 character chunks
 		FileUtils.saveToChunks("src/main/resources/encoded.txt", encodedBase64, 140);
+
+		System.out.println("Done!");
 	}
 }

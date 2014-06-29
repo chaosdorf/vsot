@@ -2,4 +2,5 @@
 *.iml
 target/
 classes/
+src/main/resources/encoded.txt
 src/main/resources/output.jpg

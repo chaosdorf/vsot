@@ -7,6 +7,14 @@
     <groupId>vsot</groupId>
     <artifactId>de.chaosdorf</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <description>Video Streaming Over Twitter - Encode binary data into UTF-8 characters to share them over Twitter</description>
+    <description>Video Streaming Over Twitter - Encode binary data into UTF-8 characters to share them over Twitter
+    </description>
 
+    <dependencies>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.9</version>
+        </dependency>
+    </dependencies>
 </project>

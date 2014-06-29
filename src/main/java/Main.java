@@ -1,21 +1,18 @@
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import util.FileUtils;
+import util.TranscoderUtils;
 
 public class Main
 {
-	public static void main(final String[] args) throws IOException, URISyntaxException
+	public static void main(final String[] args)
 	{
-		final URL url = Main.class.getResource("chaosdorf-icon.jpg");
-		final Path path = Paths.get(url.toURI());
-		final byte[] content = Files.readAllBytes(path);
+		// Read image file into byte array
+		final byte[] content = FileUtils.load(Main.class.getResource("chaosdorf-icon.jpg"));
 
-		final String encoded = TranscoderUtils.encode(content);
-		final byte[] decoded = TranscoderUtils.decode(encoded);
+		// Let's do the magic
+		final String encodedBase64 = TranscoderUtils.encodeBase64(content);
+		final byte[] decoded = TranscoderUtils.decodeBase64(encodedBase64);
 
+		// Check if converting did work
 		int limit = 0;
 		for (int i = 0; i < content.length; i++)
 		{
@@ -32,9 +29,16 @@ public class Main
 				}
 			}
 		}
+		if (limit > 0)
+		{
+			System.err.println("We had some errors in the converting process!");
+			System.exit(1);
+		}
 
-		//final FileOutputStream fos = new FileOutputStream("src/main/resources/output.jpg");
-		//fos.write(decoded);
-		//fos.close();
+		// Save image back into new file
+		FileUtils.save("src/main/resources/output.jpg", decoded);
+
+		// Save encoded Strings as tweetable chunks
+		FileUtils.saveToChunks("src/main/resources/encoded.txt", encodedBase64, 140);
 	}
 }

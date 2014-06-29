@@ -83,6 +83,7 @@ public class TranscoderUtils
 
 	public static String toBinary(final int bits, final int data)
 	{
-		return String.format("%" + bits + "s", Integer.toBinaryString(data)).replace(' ', '0');
+		final String binary = String.format("%" + bits + "s", Integer.toBinaryString(data)).replace(' ', '0');
+		return binary.substring(binary.length() - bits);
 	}
 }

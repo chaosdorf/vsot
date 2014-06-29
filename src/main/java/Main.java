@@ -18,12 +18,16 @@ public class Main
 		{
 			if (content[i] != decoded[i])
 			{
+				if (limit == 0)
+				{
+					System.out.println("       Original Converted");
+				}
 				System.out.printf("%5d: %8s %8s\n",
 						i,
 						TranscoderUtils.toBinary(8, content[i]),
 						TranscoderUtils.toBinary(8, decoded[i])
 				);
-				if (++limit > 10)
+				if (++limit == 10)
 				{
 					break;
 				}

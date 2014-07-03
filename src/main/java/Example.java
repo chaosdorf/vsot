@@ -2,7 +2,9 @@ import util.TranscoderUtils;
 
 public class Example
 {
+	/*
 	public static void example()
+
 	{
 		final String content = "Bei der UTF-8-Kodierung wird jedem Unicode-Zeichen eine speziell kodierte Zeichenkette variabler Länge zugeordnet. Dabei unterstützt UTF-8 Zeichenketten bis zu einer Länge von vier Byte, auf die sich – wie bei allen UTF-Formaten – alle Unicode-Zeichen abbilden lassen.";
 
@@ -50,4 +52,5 @@ public class Example
 
 		return encoded;
 	}
+	*/
 }

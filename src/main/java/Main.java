@@ -1,19 +1,24 @@
 import util.FileUtils;
 import util.TranscoderUtils;
-
+import util.BitOutputStream;
 public class Main
 {
+    public static boolean DEBUG = false;
 	public static void main(final String[] args)
 	{
 		// Read image file into byte array
 		final byte[] original = FileUtils.load(Main.class.getResource("chaosdorf-icon.jpg"));
 
 		// Let's do the magic
-		final String encoded = TranscoderUtils.encodeBase64(original);
-		final byte[] decoded = TranscoderUtils.decodeBase64(encoded);
+		final int[] encoded = TranscoderUtils.encodeV2(original);
+        bitWrite(encoded);
+
+        final byte[] encodedLoad = FileUtils.load(Main.class.getResource("encoded.txt"));
+
+        final byte[] decoded = TranscoderUtils.decode(encodedLoad);
 
 		// Check if converting did work
-		if (TranscoderUtils.compareResults(original, decoded, 10))
+		if (DEBUG && TranscoderUtils.compareResults(original, decoded, 10))
 		{
 			System.err.println("We had some errors in the converting process!");
 			System.exit(1);
@@ -23,9 +28,25 @@ public class Main
 		// Save image back into new file
 		FileUtils.save("src/main/resources/output.jpg", decoded);
 
-		// Save encoded Strings in 140 character chunks
-		FileUtils.saveToChunks("src/main/resources/encoded.txt", encoded, 140);
-
 		System.out.println("Done!");
 	}
+    private static void bitWrite(int[] encoded)
+    {
+        final BitOutputStream bos = new BitOutputStream("src/main/resources/encoded.txt");
+        try
+        {
+            for(int codepoint: encoded)
+            {
+                bos.write(24, codepoint);
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            bos.close();
+        }
+    }
 }

@@ -6,7 +6,7 @@ public class TranscoderUtils
 {
 	private static boolean DEBUG = false;
 
-/*	public static String encodeBase64(final byte[] input)
+	public static String encodeBase64(final byte[] input)
 	{
 		return encode(Base64.encodeBase64(input));
 	}
@@ -15,8 +15,42 @@ public class TranscoderUtils
 	{
 		return Base64.decodeBase64(decode(input));
 	}
-*/
-	public static byte[]  encode(final byte[] input)
+    public static int[] encodeV2(final byte[] data)
+    {
+        final int inputLength = data.length;
+        final boolean isUneven = (inputLength % 2 > 0);
+        byte[] input = new byte[inputLength + (isUneven?1:0)];
+        System.arraycopy(data, 0, input,0,inputLength);
+        if(isUneven)
+            input[input.length-1] = 0;
+        final int[] encoded = new int[inputLength/2 + (isUneven ? 1 : 0)];
+
+        for(int i = 0; i < inputLength; i+=2 )
+        {
+            // 0b1111_0000 of input1
+            int newCodepoint = 0xe0;
+            newCodepoint += ((input[i] & 0b1111_0000)>>>4);
+            if(DEBUG) System.out.println("first: " + newCodepoint);
+            newCodepoint <<= 8;
+
+            // 0b0000_1111 of input1 and 0b1100_0000 of input2
+            newCodepoint += 0x80;
+            newCodepoint += ((input[i] & 0b0000_1111) << 2);
+            newCodepoint += ((input[i + 1] & 0b1100_0000) >>> 6);
+            if(DEBUG) System.out.println("second: " + newCodepoint);
+            newCodepoint <<= 8;
+
+            // 0b0011_1111 of input2
+            newCodepoint += 0x80;
+            newCodepoint += (input[i + 1] & 0x3F);
+            if(DEBUG) System.out.println("third: " + newCodepoint);
+
+            encoded[i/2] = newCodepoint;
+        }
+        return encoded;
+    }
+
+	public static String encode(final byte[] input)
 	{
 		// Pad data if number of bytes is uneven
 		final int byteLength = input.length;
@@ -41,12 +75,6 @@ public class TranscoderUtils
 
 			if (DEBUG)
 			{
-                System.out.printf("%x:%x - %x:%x:%x\n",
-                        data[j],
-                        data[j+1],
-                        encoded[i],
-                        encoded[i+1],
-                        encoded[i+2]);
 				System.out.printf("1110 %s - 10 %s %s - 10 %s - %s %s - %s\n",
 						toBinary(4, ((data[j] & 0b1111_0000) >> 4)),
 						toBinary(4, ((data[j] & 0b0000_1111))),
@@ -61,11 +89,16 @@ public class TranscoderUtils
 			j += 2;
 		}
 
-		return encoded;
+		return new String(encoded);
 	}
 
-	public static byte[] decode(final byte[] data)
+	public static byte[] decode(final String data)
+    {
+        return decode(data.getBytes());
+    }
+    public static byte[] decode(final byte[] data)
 	{
+
 		// Decode data
 		final byte[] decoded = new byte[(int) Math.ceil(data.length * 2 / 3)];
 
@@ -80,11 +113,11 @@ public class TranscoderUtils
 		return decoded;
 	}
 
-/*	public static String decodeToString(final String input)
+	public static String decodeToString(final String input)
 	{
 		return (new String(decode(input))).trim();
 	}
-*/
+
 	public static boolean compareResults(final byte[] original, final byte[] converted, final int maxResults)
 	{
 		int limit = 0;

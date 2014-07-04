@@ -15,32 +15,34 @@ public class TranscoderUtils
 	{
 		return Base64.decodeBase64(decode(input));
 	}
-    public static int[] encodeV2(final byte[] input)
+    public static int[] encodeV2(final byte[] data)
     {
-        final int inputLength = input.length;
+        final int inputLength = data.length;
         final boolean isUneven = (inputLength % 2 > 0);
+        byte[] input = new byte[inputLength + (isUneven?1:0)];
+        System.arraycopy(data, 0, input,0,inputLength);
+        if(isUneven)
+            input[input.length-1] = 0;
         final int[] encoded = new int[inputLength/2 + (isUneven ? 1 : 0)];
 
         for(int i = 0; i < inputLength; i+=2 )
         {
             // 0b1111_0000 of input1
             int newCodepoint = 0xe0;
-            newCodepoint += ((input[i] & 0xf0)>>>4);
+            newCodepoint += ((input[i] & 0b1111_0000)>>>4);
             if(DEBUG) System.out.println("first: " + newCodepoint);
             newCodepoint <<= 8;
 
             // 0b0000_1111 of input1 and 0b1100_0000 of input2
             newCodepoint += 0x80;
-            newCodepoint += ((input[i] & 0x0F) << 2);
-            newCodepoint += isUneven ?
-                    0 :
-                    (((input[i + 1] & 0xC0) >>> 6) & 0x03);
+            newCodepoint += ((input[i] & 0b0000_1111) << 2);
+            newCodepoint += ((input[i + 1] & 0b1100_0000) >>> 6);
             if(DEBUG) System.out.println("second: " + newCodepoint);
             newCodepoint <<= 8;
 
             // 0b0011_1111 of input2
             newCodepoint += 0x80;
-            newCodepoint += isUneven? 0 : (input[i + 1] & 0x3F);
+            newCodepoint += (input[i + 1] & 0x3F);
             if(DEBUG) System.out.println("third: " + newCodepoint);
 
             encoded[i/2] = newCodepoint;
@@ -90,9 +92,12 @@ public class TranscoderUtils
 		return new String(encoded);
 	}
 
-	public static byte[] decode(final String input)
+	public static byte[] decode(final String data)
+    {
+        return decode(data.getBytes());
+    }
+    public static byte[] decode(final byte[] data)
 	{
-		final byte[] data = input.getBytes();
 
 		// Decode data
 		final byte[] decoded = new byte[(int) Math.ceil(data.length * 2 / 3)];

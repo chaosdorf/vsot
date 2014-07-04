@@ -7,11 +7,11 @@ public class Main
 	public static void main(final String[] args)
 	{
 		// Read image file into byte array
-		final byte[] original = FileUtils.load(Main.class.getResource("chaosdorf-icon.jpg"));
+		final byte[] original = FileUtils.load(Main.class.getResource("stein.bmp"));
 
 		// Let's do the magic
 		final int[] encoded = TranscoderUtils.encodeV2(original);
-        bitWrite(encoded);
+        FileUtils.bitWrite(encoded, "src/main/resources/encoded.txt");
 
         final byte[] encodedLoad = FileUtils.load(Main.class.getResource("encoded.txt"));
 
@@ -26,30 +26,11 @@ public class Main
 		System.out.println("Conversion was successful! Saving results...");
 
 		// Save image back into new file
-		FileUtils.save("src/main/resources/output.jpg", decoded);
+		FileUtils.save("src/main/resources/output.bmp", decoded);
 
 		// Save encoded Strings in 140 character chunks
 		//FileUtils.saveToChunks("src/main/resources/encoded.txt", encoded, 140);
 
 		System.out.println("Done!");
 	}
-    private static void bitWrite(int[] encoded)
-    {
-        final BitOutputStream bos = new BitOutputStream("src/main/resources/encoded.txt");
-        try
-        {
-            for(int codepoint: encoded)
-            {
-                bos.write(24, codepoint);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        finally
-        {
-            bos.close();
-        }
-    }
 }

@@ -1,37 +1,40 @@
-import util.FileUtils;
-import util.TranscoderUtils;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.dsl.Disruptor;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Main
 {
-	public static boolean DEBUG = false;
-
-	public static void main(final String[] args)
+	public static void main(String[] args) throws Exception
 	{
-		// Read image file into byte array
-		final byte[] original = FileUtils.load(Main.class.getResource("stein.bmp"));
+		// Specify the size of the ring buffer, must be power of 2.
+		int bufferSize = 8;
 
-		// Let's do the magic
-		final int[] encoded = TranscoderUtils.encodeV2(original);
-		FileUtils.bitWrite(encoded, "src/main/resources/encoded.txt");
+		Executor encodedExecutor = Executors.newCachedThreadPool();
+		EncodedEventFactory encodedEventFactory = new EncodedEventFactory();
+		Disruptor<EncodedEvent> encodedDisruptor = new Disruptor<>(encodedEventFactory, bufferSize, encodedExecutor);
+		encodedDisruptor.handleEventsWith(new EncodedEventHandler());
+		encodedDisruptor.start();
 
-		final byte[] encodedLoad = FileUtils.load(Main.class.getResource("encoded.txt"));
+		Executor fileReaderExecutor = Executors.newCachedThreadPool();
+		FileReaderEventFactory fileReaderFactory = new FileReaderEventFactory();
+		Disruptor<FileReaderEvent> fileReaderDisruptor = new Disruptor<>(fileReaderFactory, bufferSize, fileReaderExecutor);
 
-		final byte[] decoded = TranscoderUtils.decode(encodedLoad);
+		RingBuffer<EncodedEvent> encodedRingBuffer = encodedDisruptor.getRingBuffer();
+		fileReaderDisruptor.handleEventsWith(new FileReaderEventHandler(encodedRingBuffer));
+		fileReaderDisruptor.start();
 
-		// Check if converting did work
-		if (DEBUG && TranscoderUtils.compareResults(original, decoded, 10))
-		{
-			System.err.println("We had some errors in the converting process!");
-			System.exit(1);
-		}
-		System.out.println("Conversion was successful! Saving results...");
+		RingBuffer<FileReaderEvent> fileReaderRingBuffer = fileReaderDisruptor.getRingBuffer();
+		FileHandlerEventProducer producer = new FileHandlerEventProducer(fileReaderRingBuffer);
+		producer.produce("src/main/resources/input.png");
 
-		// Save image back into new file
-		FileUtils.save("src/main/resources/output.bmp", decoded);
+		TimeUnit.SECONDS.sleep(10);
 
-		// Save encoded Strings in 140 character chunks
-		//FileUtils.saveToChunks("src/main/resources/encoded.txt", encoded, 140);
+		fileReaderDisruptor.shutdown();
+		encodedDisruptor.shutdown();
 
-		System.out.println("Done!");
+		System.exit(0);
 	}
 }

@@ -4,7 +4,9 @@ import org.apache.commons.codec.binary.Base64;
 
 public class TranscoderUtils
 {
-	private static boolean DEBUG = false;
+	public static final int OFFSET = 64;
+
+	private static boolean DEBUG = true;
 
 	public static String encodeBase64(final byte[] input)
 	{
@@ -15,40 +17,58 @@ public class TranscoderUtils
 	{
 		return Base64.decodeBase64(decode(input));
 	}
-    public static int[] encodeV2(final byte[] data)
-    {
-        final int inputLength = data.length;
-        final boolean isUneven = (inputLength % 2 > 0);
-        byte[] input = new byte[inputLength + (isUneven?1:0)];
-        System.arraycopy(data, 0, input,0,inputLength);
-        if(isUneven)
-            input[input.length-1] = 0;
-        final int[] encoded = new int[inputLength/2 + (isUneven ? 1 : 0)];
 
-        for(int i = 0; i < inputLength; i+=2 )
-        {
-            // 0b1111_0000 of input1
-            int newCodepoint = 0xe0;
-            newCodepoint += ((input[i] & 0b1111_0000)>>>4);
-            if(DEBUG) System.out.println("first: " + newCodepoint);
-            newCodepoint <<= 8;
+	public static int[] encodeV2(final byte[] data)
+	{
+		final int inputLength = data.length;
+		final boolean isUneven = (inputLength % 2 > 0);
+		byte[] input = new byte[inputLength + (isUneven ? 1 : 0)];
+		System.arraycopy(data, 0, input, 0, inputLength);
+		if (isUneven)
+		{
+			input[input.length - 1] = 0;
+		}
+		final int[] encoded = new int[inputLength / 2 + (isUneven ? 1 : 0)];
 
-            // 0b0000_1111 of input1 and 0b1100_0000 of input2
-            newCodepoint += 0x80;
-            newCodepoint += ((input[i] & 0b0000_1111) << 2);
-            newCodepoint += ((input[i + 1] & 0b1100_0000) >>> 6);
-            if(DEBUG) System.out.println("second: " + newCodepoint);
-            newCodepoint <<= 8;
+		for (int i = 0; i < inputLength; i += 2)
+		{
+			if (DEBUG)
+			{
+				System.out.println(toBinary(32, input[i]));
+				System.out.println(toBinary(32, input[i + 1]));
+			}
 
-            // 0b0011_1111 of input2
-            newCodepoint += 0x80;
-            newCodepoint += (input[i + 1] & 0x3F);
-            if(DEBUG) System.out.println("third: " + newCodepoint);
+			// 0b1111_0000 of input1
+			int newCodepoint = 0xe0;
+			newCodepoint += ((input[i] & 0b1111_0000) >>> 4);
+			if (DEBUG)
+			{
+				System.out.println("first: " + toBinary(32, newCodepoint));
+			}
 
-            encoded[i/2] = newCodepoint;
-        }
-        return encoded;
-    }
+			// 0b0000_1111 of input1 and 0b1100_0000 of input2
+			newCodepoint <<= 8;
+			newCodepoint += 0x80;
+			newCodepoint += ((input[i] & 0b0000_1111) << 2);
+			newCodepoint += ((input[i + 1] & 0b1100_0000) >>> 6);
+			if (DEBUG)
+			{
+				System.out.println("second: " + toBinary(32, newCodepoint));
+			}
+
+			// 0b0011_1111 of input2
+			newCodepoint <<= 8;
+			newCodepoint += 0x80;
+			newCodepoint += (input[i + 1] & 0x3F);
+			if (DEBUG)
+			{
+				System.out.println("third: " + toBinary(32, newCodepoint));
+			}
+
+			encoded[i / 2] = newCodepoint;
+		}
+		return encoded;
+	}
 
 	public static String encode(final byte[] input)
 	{
@@ -93,24 +113,43 @@ public class TranscoderUtils
 	}
 
 	public static byte[] decode(final String data)
-    {
-        return decode(data.getBytes());
-    }
-    public static byte[] decode(final byte[] data)
 	{
+		return decode(data.getBytes());
+	}
 
+	public static byte[] decode(final byte[] data)
+	{
 		// Decode data
-		final byte[] decoded = new byte[(int) Math.ceil(data.length * 2 / 3)];
+		final byte[] decoded = new byte[(int) Math.floor(data.length * 2 / 3)];
+		int inverted = 0;
 
 		int j = 0;
-		for (int i = 0; i < data.length; i += 3)
+		for (int i = 0; i < data.length - 2; i += 3)
 		{
-			decoded[j] = (byte) (((data[i] & 0b0000_1111) << 4) | ((data[i + 1] & 0b0011_1100) >> 2));
+			boolean invert = false;
+			if (data[i] == 33)
+			{
+				invert = true;
+				inverted++;
+				i++;
+			}
+
+			decoded[j] = (byte) (((data[i] & 0b0000_1111) << 4) | ((data[i + 1] & 0b0011_1100) >>> 2));
 			decoded[j + 1] = (byte) (((data[i + 1] & 0b0000_0011) << 6) | ((data[i + 2] & 0b0011_1111)));
+
+			if (invert)
+			{
+				decoded[j] = (byte) (~decoded[j] & 0xff);
+				decoded[j + 1] = (byte) (~decoded[j + 1] & 0xff);
+			}
+
 			j += 2;
 		}
 
-		return decoded;
+		byte[] result = new byte[(int) Math.floor((data.length - inverted) * 2 / 3) - 1];
+		System.arraycopy(decoded, 0, result, 0, result.length);
+
+		return result;
 	}
 
 	public static String decodeToString(final String input)

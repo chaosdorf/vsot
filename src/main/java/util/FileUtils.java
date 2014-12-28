@@ -24,25 +24,22 @@ public class FileUtils
 		}
 		return null;
 	}
-    public static void bitWrite(int[] encoded, String file)
-    {
-        final BitOutputStream bos = new BitOutputStream(file);
-        try
-        {
-            for(int codepoint: encoded)
-            {
-                bos.write(24, codepoint);
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        finally
-        {
-            bos.close();
-        }
-    }
+
+	public static void bitWrite(int[] encoded, String file)
+	{
+		try (final BitOutputStream bos = new BitOutputStream(file))
+		{
+			for (int codepoint : encoded)
+			{
+				bos.write(24, codepoint);
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 	public static void save(final String file, final byte[] content)
 	{
 		try (final FileOutputStream fileOutputStream = new FileOutputStream(file))

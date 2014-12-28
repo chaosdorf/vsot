@@ -1,9 +1,10 @@
 import util.FileUtils;
 import util.TranscoderUtils;
-import util.BitOutputStream;
+
 public class Main
 {
-    public static boolean DEBUG = false;
+	public static boolean DEBUG = false;
+
 	public static void main(final String[] args)
 	{
 		// Read image file into byte array
@@ -11,11 +12,11 @@ public class Main
 
 		// Let's do the magic
 		final int[] encoded = TranscoderUtils.encodeV2(original);
-        FileUtils.bitWrite(encoded, "src/main/resources/encoded.txt");
+		FileUtils.bitWrite(encoded, "src/main/resources/encoded.txt");
 
-        final byte[] encodedLoad = FileUtils.load(Main.class.getResource("encoded.txt"));
+		final byte[] encodedLoad = FileUtils.load(Main.class.getResource("encoded.txt"));
 
-        final byte[] decoded = TranscoderUtils.decode(encodedLoad);
+		final byte[] decoded = TranscoderUtils.decode(encodedLoad);
 
 		// Check if converting did work
 		if (DEBUG && TranscoderUtils.compareResults(original, decoded, 10))

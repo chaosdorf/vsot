@@ -5,8 +5,9 @@ import java.io.UnsupportedEncodingException;
 
 public class FileReaderEventHandler implements EventHandler<FileReaderEvent>
 {
-	private final RingBuffer<EncodedEvent> ringBuffer;
 	private final byte[] bytes = new byte[3];
+
+	private final RingBuffer<EncodedEvent> ringBuffer;
 
 	public FileReaderEventHandler(final RingBuffer<EncodedEvent> ringBuffer)
 	{
@@ -17,6 +18,7 @@ public class FileReaderEventHandler implements EventHandler<FileReaderEvent>
 	{
 		byte byte1 = (byte) fileReaderEvent.getChar1();
 		byte byte2 = (byte) fileReaderEvent.getChar2();
+		boolean isPadded = fileReaderEvent.isPadded();
 
 		String prefix = "";
 		convertToUtf8(byte1, byte2);
@@ -28,6 +30,10 @@ public class FileReaderEventHandler implements EventHandler<FileReaderEvent>
 		if (!Utf8.isValidUtf8(bytes))
 		{
 			throw new IllegalArgumentException();
+		}
+		if (isPadded)
+		{
+			prefix += "-";
 		}
 
 		long sequence = ringBuffer.next();
@@ -42,7 +48,8 @@ public class FileReaderEventHandler implements EventHandler<FileReaderEvent>
 		}
 	}
 
-	public void convertToUtf8(int byte1, int byte2) {
+	public void convertToUtf8(int byte1, int byte2)
+	{
 		bytes[0] = (byte) (0b1110_0000 | ((byte1 & 0b1111_0000) >>> 4));
 		bytes[1] = (byte) (0b1000_0000 | ((byte1 & 0b0000_1111) << 2) | ((byte2 & 0b1100_0000) >>> 6));
 		bytes[2] = (byte) (0b1000_0000 | ((byte2 & 0b0011_1111)));

@@ -1,24 +1,24 @@
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class Main
 {
 	public static void main(String[] args) throws Exception
 	{
 		// Specify the size of the ring buffer, must be power of 2.
-		int bufferSize = 8;
+		int bufferSize = 1024;
 
-		Executor encodedExecutor = Executors.newCachedThreadPool();
+		CountDownLatch awaitCompletion = new CountDownLatch(1);
+
+		ExecutorService encodedExecutor = Executors.newCachedThreadPool();
 		EncodedEventFactory encodedEventFactory = new EncodedEventFactory();
 		Disruptor<EncodedEvent> encodedDisruptor = new Disruptor<>(encodedEventFactory, bufferSize, encodedExecutor);
 		encodedDisruptor.handleEventsWith(new EncodedEventHandler());
 		encodedDisruptor.start();
 
-		Executor fileReaderExecutor = Executors.newCachedThreadPool();
+		ExecutorService fileReaderExecutor = Executors.newCachedThreadPool();
 		FileReaderEventFactory fileReaderFactory = new FileReaderEventFactory();
 		Disruptor<FileReaderEvent> fileReaderDisruptor = new Disruptor<>(fileReaderFactory, bufferSize, fileReaderExecutor);
 
@@ -27,14 +27,18 @@ public class Main
 		fileReaderDisruptor.start();
 
 		RingBuffer<FileReaderEvent> fileReaderRingBuffer = fileReaderDisruptor.getRingBuffer();
-		FileHandlerEventProducer producer = new FileHandlerEventProducer(fileReaderRingBuffer);
+		FileHandlerEventProducer producer = new FileHandlerEventProducer(fileReaderRingBuffer, awaitCompletion);
 		producer.produce("src/main/resources/input.png");
 
-		TimeUnit.SECONDS.sleep(10);
+		awaitCompletion.await();
 
 		fileReaderDisruptor.shutdown();
 		encodedDisruptor.shutdown();
 
-		System.exit(0);
+		encodedExecutor.shutdownNow();
+		fileReaderExecutor.shutdownNow();
+
+		fileReaderExecutor.awaitTermination(1, TimeUnit.MINUTES);
+		encodedExecutor.awaitTermination(1, TimeUnit.MINUTES);
 	}
 }

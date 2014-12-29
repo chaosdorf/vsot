@@ -121,7 +121,7 @@ public class TranscoderUtils
 	{
 		// Decode data
 		final byte[] decoded = new byte[(int) Math.floor(data.length * 2 / 3)];
-		int inverted = 0;
+		int skippedBytes = 0;
 
 		int j = 0;
 		for (int i = 0; i < data.length - 2; i += 3)
@@ -130,23 +130,36 @@ public class TranscoderUtils
 			if (data[i] == 33)
 			{
 				invert = true;
-				inverted++;
+				skippedBytes++;
+				i++;
+			}
+			boolean isPadding = false;
+			if (data[i] == 45)
+			{
+				isPadding = true;
+				skippedBytes++;
 				i++;
 			}
 
 			decoded[j] = (byte) (((data[i] & 0b0000_1111) << 4) | ((data[i + 1] & 0b0011_1100) >>> 2));
-			decoded[j + 1] = (byte) (((data[i + 1] & 0b0000_0011) << 6) | ((data[i + 2] & 0b0011_1111)));
+			if (!isPadding)
+			{
+				decoded[j + 1] = (byte) (((data[i + 1] & 0b0000_0011) << 6) | ((data[i + 2] & 0b0011_1111)));
+			}
 
 			if (invert)
 			{
 				decoded[j] = (byte) (~decoded[j] & 0xff);
-				decoded[j + 1] = (byte) (~decoded[j + 1] & 0xff);
+				if (!isPadding)
+				{
+					decoded[j + 1] = (byte) (~decoded[j + 1] & 0xff);
+				}
 			}
 
 			j += 2;
 		}
 
-		byte[] result = new byte[(int) Math.floor((data.length - inverted) * 2 / 3) - 1];
+		byte[] result = new byte[(int) Math.floor((data.length - skippedBytes) * 2 / 3) - 1];
 		System.arraycopy(decoded, 0, result, 0, result.length);
 
 		return result;

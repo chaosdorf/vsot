@@ -1,16 +1,20 @@
 import com.lmax.disruptor.RingBuffer;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.concurrent.CountDownLatch;
 
 public class FileHandlerEventProducer
 {
 	private final RingBuffer<FileReaderEvent> ringBuffer;
+	private final CountDownLatch awaitCompletion;
 
-	public FileHandlerEventProducer(RingBuffer<FileReaderEvent> ringBuffer)
+	public FileHandlerEventProducer(RingBuffer<FileReaderEvent> ringBuffer, final CountDownLatch awaitCompletion)
 	{
 		this.ringBuffer = ringBuffer;
+		this.awaitCompletion = awaitCompletion;
 	}
 
 	public void produce(String fileName)
@@ -23,8 +27,9 @@ public class FileHandlerEventProducer
 				while (inChannel.read(buffer) > 0)
 				{
 					buffer.flip();
+					boolean isPadded = (buffer.limit() < 2);
 					int char1 = buffer.get();
-					int char2 = (buffer.limit() > 1) ? buffer.get() : ' ';
+					int char2 = (isPadded) ? ' ' : buffer.get();
 
 					long sequence = ringBuffer.next();
 					try
@@ -32,6 +37,7 @@ public class FileHandlerEventProducer
 						FileReaderEvent fileReaderEvent = ringBuffer.get(sequence);
 						fileReaderEvent.setChar1(char1);
 						fileReaderEvent.setChar2(char2);
+						fileReaderEvent.setPadded(isPadded);
 					}
 					finally
 					{
@@ -46,5 +52,6 @@ public class FileHandlerEventProducer
 		{
 			e.printStackTrace();
 		}
+		awaitCompletion.countDown();
 	}
 }

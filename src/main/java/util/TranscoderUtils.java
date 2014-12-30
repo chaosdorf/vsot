@@ -120,7 +120,7 @@ public class TranscoderUtils
 	public static byte[] decode(final byte[] data)
 	{
 		// Decode data
-		final byte[] decoded = new byte[(int) Math.floor(data.length * 2 / 3)];
+		final byte[] decoded = new byte[calcSize(data.length, 0)];
 		int skippedBytes = 0;
 
 		int j = 0;
@@ -137,7 +137,7 @@ public class TranscoderUtils
 			if (data[i] == 45)
 			{
 				isPadding = true;
-				skippedBytes++;
+				skippedBytes += 2;
 				i++;
 			}
 
@@ -159,7 +159,7 @@ public class TranscoderUtils
 			j += 2;
 		}
 
-		byte[] result = new byte[(int) Math.floor((data.length - skippedBytes) * 2 / 3) - 1];
+		byte[] result = new byte[calcSize(data.length, skippedBytes)];
 		System.arraycopy(decoded, 0, result, 0, result.length);
 
 		return result;
@@ -213,5 +213,10 @@ public class TranscoderUtils
 	{
 		final String binary = String.format("%" + bits + "s", Integer.toBinaryString(data)).replace(' ', '0');
 		return binary.substring(binary.length() - bits);
+	}
+
+	private static int calcSize(int originalLength, int skippedBytes)
+	{
+		return (originalLength - skippedBytes) * 2 / 3;
 	}
 }

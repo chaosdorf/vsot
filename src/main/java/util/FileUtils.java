@@ -1,9 +1,9 @@
 package util;
 
+import java.io.Closeable;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,38 +11,39 @@ import java.util.List;
 
 public class FileUtils
 {
-	public static byte[] load(final URL url)
+	public static void delete(String fileName)
 	{
 		try
 		{
-			final Path path = Paths.get(url.toURI());
+			Path path = Paths.get(fileName);
+			Files.deleteIfExists(path);
+		}
+		catch (IOException ignored)
+		{
+		}
+	}
+
+	public static byte[] load(String fileName)
+	{
+		try
+		{
+			Path path = Paths.get(fileName);
 			return Files.readAllBytes(path);
 		}
-		catch (URISyntaxException | IOException e)
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	public static void bitWrite(int[] encoded, String file)
+	public static void save(String file, byte[] content)
 	{
-		try (final BitOutputStream bos = new BitOutputStream(file))
+		if (content == null)
 		{
-			for (int codepoint : encoded)
-			{
-				bos.write(24, codepoint);
-			}
+			return;
 		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-
-	public static void save(final String file, final byte[] content)
-	{
-		try (final FileOutputStream fileOutputStream = new FileOutputStream(file))
+		try (FileOutputStream fileOutputStream = new FileOutputStream(file))
 		{
 			fileOutputStream.write(content);
 		}
@@ -52,12 +53,12 @@ public class FileUtils
 		}
 	}
 
-	public static void saveToChunks(final String file, final String content, final int chunkSize)
+	public static void saveToChunks(String file, String content, int chunkSize)
 	{
-		try (final FileOutputStream fileOutputStream = new FileOutputStream(file))
+		try (FileOutputStream fileOutputStream = new FileOutputStream(file))
 		{
-			final List<String> tweets = StringUtils.splitInChunks(content, chunkSize);
-			for (final String tweet : tweets)
+			List<String> tweets = StringUtils.splitInChunks(content, chunkSize);
+			for (String tweet : tweets)
 			{
 				fileOutputStream.write(tweet.getBytes());
 			}
@@ -65,6 +66,30 @@ public class FileUtils
 		catch (IOException e)
 		{
 			e.printStackTrace();
+		}
+	}
+
+	public static void closeSilently(Closeable closeable)
+	{
+		if (closeable != null)
+		{
+			if (closeable instanceof FileWriter)
+			{
+				try
+				{
+					((FileWriter) closeable).flush();
+				}
+				catch (IOException ignored)
+				{
+				}
+			}
+			try
+			{
+				closeable.close();
+			}
+			catch (IOException ignored)
+			{
+			}
 		}
 	}
 }

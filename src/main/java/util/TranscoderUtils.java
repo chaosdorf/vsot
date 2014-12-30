@@ -165,17 +165,31 @@ public class TranscoderUtils
 		return result;
 	}
 
-	public static String decodeToString(final String input)
+	public static boolean compareResults(final byte[] original, final byte[] decoded, final int maxResults)
 	{
-		return (new String(decode(input))).trim();
-	}
-
-	public static boolean compareResults(final byte[] original, final byte[] converted, final int maxResults)
-	{
-		int limit = 0;
-		for (int i = 0; i < original.length; i++)
+		if (original == null)
 		{
-			if (original[i] != converted[i])
+			System.out.println("No original data!");
+			return false;
+		}
+		if (decoded == null)
+		{
+			System.out.println("No decoded data!");
+			return false;
+		}
+
+		int orgLength = original.length;
+		int convertedLength = decoded.length;
+
+		if (orgLength != convertedLength)
+		{
+			System.out.println(String.format("Length mismatch! %d (org) vs. %s (decoded)", orgLength, convertedLength));
+		}
+
+		int limit = 0;
+		for (int i = 0; i < orgLength; i++)
+		{
+			if (original[i] != decoded[i])
 			{
 				if (limit == 0)
 				{
@@ -184,7 +198,7 @@ public class TranscoderUtils
 				System.out.printf("%5d: %8s %8s\n",
 						i,
 						TranscoderUtils.toBinary(8, original[i]),
-						TranscoderUtils.toBinary(8, converted[i])
+						TranscoderUtils.toBinary(8, decoded[i])
 				);
 				if (++limit == maxResults)
 				{

@@ -25,7 +25,7 @@ public class FileReaderEventHandler implements EventHandler<FileReaderEvent>
 		convertToUtf8(byte1, byte2);
 		if (!Utf8.isValidUtf8(bytes))
 		{
-			prefix = "!";
+			prefix += "!";
 			convertToUtf8(~byte1 & 0xff, ~byte2 & 0xff);
 		}
 		if (!Utf8.isValidUtf8(bytes))

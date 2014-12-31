@@ -12,7 +12,7 @@ public class Main
 {
 	public static final int BUFFER_SIZE = 4096;
 
-	public static final String FILE_SUFFIX = "webm";
+	public static final String FILE_SUFFIX = "txt";
 
 	public static final String BASE_DIR = "src/main/resources/";
 	public static final String INPUT_FILE = BASE_DIR + "input." + FILE_SUFFIX;

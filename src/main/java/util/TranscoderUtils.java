@@ -134,7 +134,7 @@ public class TranscoderUtils
 				{
 					System.out.println("       Original Converted");
 				}
-				System.out.printf("%5d: %8s %8s\n",
+				System.out.printf("%5d: %8s %8s%n",
 						i,
 						TranscoderUtils.toBinary(8, original[i]),
 						TranscoderUtils.toBinary(8, decoded[i])

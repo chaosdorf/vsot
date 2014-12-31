@@ -1,9 +1,6 @@
 package util;
 
-import java.io.Closeable;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,10 +54,13 @@ public class FileUtils
 	{
 		try (FileOutputStream fileOutputStream = new FileOutputStream(file))
 		{
-			List<String> tweets = StringUtils.splitInChunks(content, chunkSize);
-			for (String tweet : tweets)
+			try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, "UTF-8"))
 			{
-				fileOutputStream.write(tweet.getBytes());
+				List<String> tweets = StringUtils.splitInChunks(content, chunkSize);
+				for (String tweet : tweets)
+				{
+					outputStreamWriter.write(tweet);
+				}
 			}
 		}
 		catch (IOException e)

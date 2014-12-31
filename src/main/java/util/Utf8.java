@@ -1,3 +1,5 @@
+package util;
+
 /**
  * A set of low-level, high-performance static utility methods related
  * to the UTF-8 character encoding.  This class has no dependencies
@@ -32,7 +34,7 @@
  *
  * @author martinrb@google.com (Martin Buchholz)
  */
-final class Utf8 {
+public final class Utf8 {
   private Utf8() {}
 
   /**
@@ -84,7 +86,7 @@ final class Utf8 {
    * limit}, exclusive.
    *
    * <p>This is a convenience method, equivalent to {@code
-   * partialIsValidUtf8(bytes, index, limit) == Utf8.COMPLETE}.
+   * partialIsValidUtf8(bytes, index, limit) == util.Utf8.COMPLETE}.
    */
   public static boolean isValidUtf8(byte[] bytes, int index, int limit) {
     return partialIsValidUtf8(bytes, index, limit) == COMPLETE;
@@ -96,7 +98,7 @@ final class Utf8 {
    * to be checked extends from index {@code index}, inclusive, to
    * {@code limit}, exclusive.
    *
-   * @param state either {@link com.google.protobuf.Utf8#COMPLETE} (if this is the initial decoding
+   * @param state either {@link util.Utf8#COMPLETE} (if this is the initial decoding
    * operation) or the value returned from a call to a partial decoding method
    * for the previous bytes
    *
@@ -203,7 +205,7 @@ final class Utf8 {
    * {@code limit}, exclusive.
    *
    * <p>This is a convenience method, equivalent to a call to {@code
-   * partialIsValidUtf8(Utf8.COMPLETE, bytes, index, limit)}.
+   * partialIsValidUtf8(util.Utf8.COMPLETE, bytes, index, limit)}.
    *
    * @return {@link #MALFORMED} if the partial byte sequence is
    * definitely not well-formed, {@link #COMPLETE} if it is well-formed

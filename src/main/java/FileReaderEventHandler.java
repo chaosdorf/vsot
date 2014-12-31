@@ -1,5 +1,6 @@
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
+import util.Utf8;
 
 import java.io.UnsupportedEncodingException;
 

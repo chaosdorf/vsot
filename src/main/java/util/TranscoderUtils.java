@@ -1,24 +1,10 @@
 package util;
 
-import org.apache.commons.codec.binary.Base64;
-
 public class TranscoderUtils
 {
-	public static final int OFFSET = 64;
-
 	private static boolean DEBUG = true;
 
-	public static String encodeBase64(final byte[] input)
-	{
-		return encode(Base64.encodeBase64(input));
-	}
-
-	public static byte[] decodeBase64(final String input)
-	{
-		return Base64.decodeBase64(decode(input));
-	}
-
-	public static int[] encodeV2(final byte[] data)
+	public static int[] encode(final byte[] data)
 	{
 		final int inputLength = data.length;
 		final boolean isUneven = (inputLength % 2 > 0);
@@ -70,57 +56,10 @@ public class TranscoderUtils
 		return encoded;
 	}
 
-	public static String encode(final byte[] input)
-	{
-		// Pad data if number of bytes is uneven
-		final int byteLength = input.length;
-		final boolean isUneven = (byteLength % 2 > 0);
-		final byte[] data = new byte[isUneven ? byteLength + 1 : byteLength];
-		System.arraycopy(input, 0, data, 0, byteLength);
-		if (isUneven)
-		{
-			data[byteLength] = ' ';
-		}
-
-		// Encode data
-		final int size = (int) Math.ceil(data.length * 3 / 2);
-		final byte[] encoded = new byte[size];
-
-		int j = 0;
-		for (int i = 0; i < size; i += 3)
-		{
-			encoded[i] = (byte) (0b1110_0000 | ((data[j] & 0b1111_0000) >> 4));
-			encoded[i + 1] = (byte) (0b1000_0000 | ((data[j] & 0b0000_1111) << 2) | ((data[j + 1] & 0b1100_0000) >> 6));
-			encoded[i + 2] = (byte) (0b1000_0000 | ((data[j + 1] & 0b0011_1111)));
-
-			if (DEBUG)
-			{
-				System.out.printf("1110 %s - 10 %s %s - 10 %s - %s %s - %s\n",
-						toBinary(4, ((data[j] & 0b1111_0000) >> 4)),
-						toBinary(4, ((data[j] & 0b0000_1111))),
-						toBinary(2, ((data[j + 1] & 0b1100_0000) >> 6)),
-						toBinary(6, ((data[j + 1] & 0b0011_1111))),
-						(char) data[j],
-						(char) data[j + 1],
-						new String(new byte[]{encoded[i], encoded[i + 1], encoded[i + 2]})
-				);
-			}
-
-			j += 2;
-		}
-
-		return new String(encoded);
-	}
-
-	public static byte[] decode(final String data)
-	{
-		return decode(data.getBytes());
-	}
-
 	public static byte[] decode(final byte[] data)
 	{
 		// Decode data
-		final byte[] decoded = new byte[calcSize(data.length, 0)];
+		final byte[] decoded = new byte[calcDecodedByteArraySize(data.length, 0)];
 		int skippedBytes = 0;
 
 		int j = 0;
@@ -159,7 +98,7 @@ public class TranscoderUtils
 			j += 2;
 		}
 
-		byte[] result = new byte[calcSize(data.length, skippedBytes)];
+		byte[] result = new byte[calcDecodedByteArraySize(data.length, skippedBytes)];
 		System.arraycopy(decoded, 0, result, 0, result.length);
 
 		return result;
@@ -215,7 +154,7 @@ public class TranscoderUtils
 		return binary.substring(binary.length() - bits);
 	}
 
-	private static int calcSize(int originalLength, int skippedBytes)
+	private static int calcDecodedByteArraySize(int originalLength, int skippedBytes)
 	{
 		return (originalLength - skippedBytes) * 2 / 3;
 	}
